@@ -23,19 +23,12 @@
   ```
   用于单独验证主屏是否正常显示（与仪表盘相同，需 rpi-lgpio + spidev）。
 
-## MCP 服务（供 Cursor / 其他 Agent 调用）
+## MCP 与 Cursor Skill
 
-在树莓派或已连接 HAT 的环境下启动 MCP 服务（需本机具备设备权限，即 rpi-lgpio + spidev 已装、用户可访问 SPI/I²C/GPIO）：
+- **MCP**：在树莓派或已连接 HAT 的环境下，Cursor 通过 MCP 调用三联屏工具（需本机 rpi-lgpio + spidev 及设备权限）。项目内已包含 **`.cursor/mcp.json`**，用 Cursor 打开本项目根目录即可加载；若需全局或自定义，见 [docs/setup-mcp-and-skills.md](docs/setup-mcp-and-skills.md)。
+- **Skill**：`.cursor/skills/rascode-triple-screen/SKILL.md` 已配置，在 Cursor 中启用 **rascode-triple-screen** 后，Agent 会在「显示到树莓派」「三联屏」「恢复仪表盘」等场景下自动使用 MCP 工具。详细配置步骤见 [docs/setup-mcp-and-skills.md](docs/setup-mcp-and-skills.md)。
 
-```bash
-python -m rascode.mcp.server
-```
-
-或在 Cursor 的 MCP 配置中增加对应条目（参考 `docs/mcp-config.example.json`），将 `cwd` 改为本项目根目录的实际路径。若已 `pip install -e .`，可从任意目录运行。Agent 可调用的工具：`show_main_text`、`show_left_oled`、`show_right_oled`、`clear_screen`、`restore_dashboard`。
-
-## Cursor Skill
-
-项目内已包含 Skill：`.cursor/skills/rascode-triple-screen/`（内容同步存放在 `docs/skills/rascode-triple-screen/SKILL.md`）。在 Cursor 中启用该 Skill 后，Agent 会在用户提到「显示到树莓派」「三联屏」「主屏/左屏/右屏」等场景下自动使用上述 MCP 工具。
+本地启动 MCP 服务（可选，用于调试）：`python -m rascode.mcp.server`。工具：`show_main_text`、`show_left_oled`、`show_right_oled`、`clear_screen`、`restore_dashboard`。
 
 ## 测试
 
@@ -52,3 +45,4 @@ pytest tests/ -v
 - 树莓派上开启 **SPI** 与 **I²C**（`raspi-config`）。
 - 安装：`luma.oled`、`luma.lcd`、`psutil`、`pillow`、`spidev`、`fastmcp`（见 `pyproject.toml`）。
 - **三联屏与 MCP**：主屏需 GPIO + SPI，推荐 `pip install -e ".[pi-noroot]"`（rpi-lgpio，无需 root）；或 `pip install -e ".[pi]"`（RPi.GPIO）。二者不能同时安装。详见 [docs/display-daemon.md](docs/display-daemon.md)。
+- **主屏花屏/黑屏**：见 [docs/troubleshooting-lcd.md](docs/troubleshooting-lcd.md)（含官方说明与排查顺序）。

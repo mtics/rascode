@@ -1,15 +1,15 @@
 """OLED-LCD-HAT-A 2 寸主屏（ST7789 SPI）显示适配。
 
-实现基于 `luma.lcd` 的 ST7789 设备：
-- SPI: /dev/spidev0.0 （port=0, device=0）
-- DC: GPIO22 （物理引脚 15）
-- RST: GPIO27（物理引脚 13）
-
-如果你的接线不同，可以在此处调整 GPIO 编号。
+引脚与官方说明一致（见 https://spotpear.cn/wiki/0.96inch-OLED-2inch-LCD-HAT-A.html）：
+- SPI: /dev/spidev0.0（port=0, device=0）；DC=物理15→BCM22，RST=物理13→BCM27。
+- 通信时序：SCLK 第一个下降沿采样，即 SPI mode 0（CPOL=0, CPHA=0）。
+花屏排查见 docs/troubleshooting-lcd.md。
 """
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -27,6 +27,17 @@ except ImportError:  # pragma: no cover - 仅在未安装依赖时触发
 from .base import BaseDisplay, DisplayError
 
 
+def _default_spi_speed_hz() -> int:
+    """环境变量 RASCODE_LCD_SPI_SPEED（Hz）可覆盖默认速率，花屏时试 2000000 或 1000000。"""
+    v = os.environ.get("RASCODE_LCD_SPI_SPEED")
+    if v is not None:
+        try:
+            return int(v)
+        except ValueError:
+            pass
+    return 2_000_000  # 默认 2MHz，尽量减轻花屏
+
+
 @dataclass
 class LcdConfig:
     """2 寸 ST7789 主屏配置。"""
@@ -35,9 +46,12 @@ class LcdConfig:
     height: int = 320
     spi_port: int = 0
     spi_device: int = 0
+    spi_speed_hz: int = 0  # 0 表示用 _default_spi_speed_hz()
     gpio_dc: int = 22
     gpio_rst: int = 27
     rotation: int = 0  # 取值通常为 0/90/180/270
+    reset_hold_s: float = 0.1  # 复位低电平保持时间
+    reset_release_s: float = 0.15  # 复位释放后等待再初始化
 
 
 class LcdHatMainDisplay(BaseDisplay):
@@ -51,7 +65,20 @@ class LcdHatMainDisplay(BaseDisplay):
                 "  pip install luma.lcd\n"
                 "并确保已开启 SPI 接口（raspi-config）。"
             )
-        self._config = config or LcdConfig()
+        raw = config or LcdConfig()
+        speed = raw.spi_speed_hz or _default_spi_speed_hz()
+        self._config = LcdConfig(
+            width=raw.width,
+            height=raw.height,
+            spi_port=raw.spi_port,
+            spi_device=raw.spi_device,
+            spi_speed_hz=speed,
+            gpio_dc=raw.gpio_dc,
+            gpio_rst=raw.gpio_rst,
+            rotation=raw.rotation,
+            reset_hold_s=raw.reset_hold_s,
+            reset_release_s=raw.reset_release_s,
+        )
         self._device = None
 
     @classmethod
@@ -62,8 +89,12 @@ class LcdHatMainDisplay(BaseDisplay):
         serial = spi(
             port=self._config.spi_port,
             device=self._config.spi_device,
+            bus_speed_hz=self._config.spi_speed_hz,
             gpio_DC=self._config.gpio_dc,
             gpio_RST=self._config.gpio_rst,
+            reset_hold_time=self._config.reset_hold_s,
+            reset_release_time=self._config.reset_release_s,
+            spi_mode=0,  # 与官方说明一致：第一下降沿采样
         )
         self._device = st7789(
             serial,
@@ -71,7 +102,12 @@ class LcdHatMainDisplay(BaseDisplay):
             height=self._config.height,
             rotate=self._config.rotation,
         )
+        # 与官方 C 例程对齐：luma 默认 MADCTL=0x70，Waveshare 2 寸屏用 0x00，否则易花屏
+        self._device.command(0x36, 0x00)  # MADCTL: 与 LCD_2inch.c 一致
+        time.sleep(0.1)
         self.clear()
+        time.sleep(0.05)
+        self.clear()  # 再清一次，减少首帧花屏
 
     def clear(self) -> None:
         if self._device is None:

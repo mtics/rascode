@@ -1,9 +1,11 @@
 """三联屏显示后端：唯一直接操作硬件的模块。
 
 供 MCP 服务与仪表盘脚本调用；需本机具备设备权限（rpi-lgpio + spidev）。
+环境变量 RASCODE_DISABLE_MAIN_LCD=1 时跳过主屏（仅用双 OLED），花屏时可使用。
 """
 from __future__ import annotations
 
+import os
 from typing import Literal
 
 _lcd = None
@@ -12,16 +14,21 @@ _displays_initialized = False
 _init_error: str | None = None
 
 
+def _main_lcd_disabled() -> bool:
+    return os.environ.get("RASCODE_DISABLE_MAIN_LCD", "").strip() in ("1", "true", "yes")
+
+
 def _ensure_displays() -> bool:
     global _lcd, _oled, _displays_initialized, _init_error
     if _displays_initialized:
-        return _lcd is not None and _oled is not None
+        return _lcd is not None or _oled is not None
     _displays_initialized = True
     try:
         from rascode.hardware.display import DualOledDisplay, LcdHatMainDisplay, OledDisplayId
 
-        _lcd = LcdHatMainDisplay()
-        _lcd.init()
+        if not _main_lcd_disabled():
+            _lcd = LcdHatMainDisplay()
+            _lcd.init()
         _oled = DualOledDisplay()
         _oled.init()
         return True
@@ -33,6 +40,8 @@ def _ensure_displays() -> bool:
 
 
 def show_main_text(lines: list[str]) -> str:
+    if _main_lcd_disabled():
+        return "主屏已禁用（RASCODE_DISABLE_MAIN_LCD），仅双 OLED 可用。"
     if not _ensure_displays() or _lcd is None:
         return f"主屏不可用：{_init_error or '未初始化'}"
     try:

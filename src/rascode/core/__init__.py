@@ -1,6 +1,3 @@
-"""核心调度与管线。"""
+"""核心包（预留，当前无独立入口）。"""
 
-from .app import Application
-
-__all__ = ["Application"]
-
+__all__ = []

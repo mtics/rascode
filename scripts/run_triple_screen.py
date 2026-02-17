@@ -1,7 +1,6 @@
 """三联屏仪表盘：主 LCD 显示标题，左 OLED 系统状态，右 OLED 时间与网络。
 
-前提：已开启 SPI 与 I²C（raspi-config），并安装 luma.oled、luma.lcd 及本项目依赖。
-主屏 LCD 使用 GPIO，需 root 运行，否则会报 No access to /dev/mem。
+前提：已开启 SPI 与 I²C（raspi-config），并安装 luma.oled、luma.lcd、spidev 及 rpi-lgpio（或 RPi.GPIO）。无需 root。
 """
 
 from __future__ import annotations

@@ -1,0 +1,58 @@
+# 编译与构建
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境（rye / venv）
+.venv/
+venv/
+ENV/
+.rye/
+
+# 测试与覆盖率
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# 类型检查
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 本地配置与密钥（勿提交）
+.env
+.env.*
+!.env.example
+*.local
+
+# 日志与临时
+*.log
+*.tmp
+.cache/

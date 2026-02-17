@@ -1,6 +1,7 @@
 # 编译与构建
 __pycache__/
 *.py[cod]
+*.pyc
 *$py.class
 *.so
 .Python

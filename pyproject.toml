@@ -16,6 +16,7 @@ dependencies = [
   "psutil",
   "luma.oled",
   "luma.lcd",
+  "spidev",
   "fastmcp",
   "pytest",
   "pytest-cov",
@@ -25,6 +26,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "mypy",
+]
+# 在树莓派上运行三联屏 / 主屏 LCD 时需安装（GPIO 二选一）
+# - RPi.GPIO：传统方式，部分环境需 root 或依赖 /dev/gpiomem + gpio 组
+# - rpi-lgpio：使用 /dev/gpiochip*，无需 root，与 RPi.GPIO 不能同时安装
+pi = [
+  "RPi.GPIO",
+]
+pi-noroot = [
+  "rpi-lgpio",
 ]
 
 [build-system]

@@ -12,14 +12,20 @@
   ```bash
   python scripts/run_triple_screen.py
   ```
-- **仅双 OLED 状态**：
+  若报错 `No access to /dev/mem`：可改用 **rpi-lgpio** 实现无需 root 的 GPIO（`pip uninstall -y RPi.GPIO && pip install rpi-lgpio`），或临时用 root 运行：`sudo python scripts/run_triple_screen.py`。
+- **仅双 OLED 状态**（仅 I²C，通常无需 root）：
   ```bash
   python scripts/run_dashboard.py
   ```
+- **仅主屏 2 寸 LCD 测试**：
+  ```bash
+  python scripts/run_main_screen.py
+  ```
+  用于单独验证主屏是否正常显示（与仪表盘相同，需 rpi-lgpio + spidev）。
 
 ## MCP 服务（供 Cursor / 其他 Agent 调用）
 
-在树莓派或已连接 HAT 的环境下启动 MCP 服务：
+在树莓派或已连接 HAT 的环境下启动 MCP 服务（需本机具备设备权限，即 rpi-lgpio + spidev 已装、用户可访问 SPI/I²C/GPIO）：
 
 ```bash
 python -m rascode.mcp.server
@@ -44,4 +50,5 @@ pytest tests/ -v
 ## 依赖与系统要求
 
 - 树莓派上开启 **SPI** 与 **I²C**（`raspi-config`）。
-- 安装：`luma.oled`、`luma.lcd`、`psutil`、`pillow`、`fastmcp`（见 `pyproject.toml`）。
+- 安装：`luma.oled`、`luma.lcd`、`psutil`、`pillow`、`spidev`、`fastmcp`（见 `pyproject.toml`）。
+- **三联屏与 MCP**：主屏需 GPIO + SPI，推荐 `pip install -e ".[pi-noroot]"`（rpi-lgpio，无需 root）；或 `pip install -e ".[pi]"`（RPi.GPIO）。二者不能同时安装。详见 [docs/display-daemon.md](docs/display-daemon.md)。

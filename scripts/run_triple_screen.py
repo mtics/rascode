@@ -1,10 +1,12 @@
 """三联屏仪表盘：主 LCD 显示标题，左 OLED 系统状态，右 OLED 时间与网络。
 
 前提：已开启 SPI 与 I²C（raspi-config），并安装 luma.oled、luma.lcd 及本项目依赖。
+主屏 LCD 使用 GPIO，需 root 运行，否则会报 No access to /dev/mem。
 """
 
 from __future__ import annotations
 
+import sys
 import time
 
 from rascode.hardware.display import DualOledDisplay, OledDisplayId, LcdHatMainDisplay
@@ -18,7 +20,14 @@ def main() -> None:
     oled = DualOledDisplay()
     monitor = SystemMonitor()
 
-    lcd.init()
+    try:
+        lcd.init()
+    except RuntimeError as e:
+        if "/dev/mem" in str(e):
+            print("主屏 LCD 需要访问 GPIO，请使用 root 运行，例如：", file=sys.stderr)
+            print(f"  sudo {sys.executable} scripts/run_triple_screen.py", file=sys.stderr)
+            sys.exit(1)
+        raise
     oled.init()
 
     try:
@@ -37,4 +46,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as e:
+        if "/dev/mem" in str(e):
+            print("主屏 LCD 需要访问 GPIO，请使用 root 运行，例如：", file=sys.stderr)
+            print(f"  sudo {sys.executable} scripts/run_triple_screen.py", file=sys.stderr)
+            sys.exit(1)
+        raise

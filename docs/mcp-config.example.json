@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "rascode-triple-screen": {
+      "command": "python",
+      "args": ["-m", "rascode.mcp.server"],
+      "cwd": "/path/to/RasCode"
+    }
+  }
+}
